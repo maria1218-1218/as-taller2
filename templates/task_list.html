@@ -154,7 +154,7 @@
                             </thead>
                             <tbody>
                                 {% for task in tasks %}
-                                <tr class="{{ 'table-success' if task.completed else 'table-warning' if task.is_overdue() else '' }}">
+                                <tr class="{{ 'table-success' if task.completed else 'table-danger' if task.is_overdue() else '' }}">
                                     <td class="text-center">
                                         <form method="POST" action="{{ url_for('task_toggle', task_id=task.id) }}" class="d-inline">
                                             <button type="submit" class="btn btn-sm btn-outline-{{ 'success' if task.completed else 'secondary' }}" title="{{ 'Marcar como pendiente' if task.completed else 'Marcar como completada' }}">

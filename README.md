@@ -83,9 +83,9 @@ pip install -r requirements.txt
 
 **Objetivo**: Añadir funcionalidades de filtrado y ordenamiento
 
-- [ ] Filtrar tareas por estado (pendiente, completada)
-- [ ] Ordenar tareas por fecha de vencimiento
-- [ ] Mostrar tareas vencidas en otro color
+- [x] Filtrar tareas por estado (pendiente, completada)
+- [x] Ordenar tareas por fecha de vencimiento
+- [x] Mostrar tareas vencidas en otro color
 
 **Archivos a modificar**: `controllers/task_controller.py`, `templates/task_list.html`, `static/style.css`
 
