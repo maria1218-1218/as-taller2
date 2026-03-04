@@ -22,6 +22,9 @@ class Task(db.Model):
     description = db.Column(db.Text, nullable=True)
     completed = db.Column(db.Boolean, default=False, nullable=False)
     due_date = db.Column(db.DateTime, nullable=True)
+    # Relación con usuario (versión 4)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user = db.relationship('User', backref='tasks')
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
@@ -81,44 +84,49 @@ class Task(db.Model):
         self.completed = False
     
     @staticmethod
-    def get_all_tasks():
+    def get_all_tasks(user_id=None):
         """
-        Obtiene todas las tareas de la base de datos
+        Obtiene todas las tareas de la base de datos. Si se provee user_id,
+        devuelve solo las tareas del usuario correspondiente.
         
+        Args:
+            user_id (int, optional): ID de usuario para filtrar
         Returns:
             list: Lista de objetos Task
         """
+        if user_id:
+            return Task.query.filter_by(user_id=user_id).all()
         return Task.query.all()
     
     @staticmethod
-    def get_pending_tasks():
+    def get_pending_tasks(user_id=None):
         """
-        Obtiene todas las tareas pendientes
-        
-        Returns:
-            list: Lista de tareas pendientes
+        Obtiene todas las tareas pendientes, opcionalmente por usuario.
         """
-        return Task.query.filter_by(completed=False).all()
+        query = Task.query.filter_by(completed=False)
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        return query.all()
     
     @staticmethod
-    def get_completed_tasks():
+    def get_completed_tasks(user_id=None):
         """
-        Obtiene todas las tareas completadas
-        
-        Returns:
-            list: Lista de tareas completadas
+        Obtiene todas las tareas completadas, opcionalmente por usuario.
         """
-        return Task.query.filter_by(completed=True).all()
+        query = Task.query.filter_by(completed=True)
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        return query.all()
     
     @staticmethod
-    def get_overdue_tasks():
+    def get_overdue_tasks(user_id=None):
         """
-        Obtiene todas las tareas vencidas
-        
-        Returns:
-            list: Lista de tareas vencidas
+        Obtiene todas las tareas vencidas, opcionalmente por usuario.
         """
-        return Task.query.filter(Task.due_date < datetime.utcnow(), Task.completed == False).all()
+        query = Task.query.filter(Task.due_date < datetime.utcnow(), Task.completed == False)
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        return query.all()
     
     def save(self):
         """Guarda la tarea en la base de datos"""

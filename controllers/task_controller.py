@@ -5,10 +5,12 @@ Este archivo contiene todas las rutas y lógica relacionada con las tareas.
 Representa la capa "Controlador" en la arquitectura MVC.
 """
 
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash, jsonify, session
 from datetime import datetime
 from models.task import Task
 from app import db
+
+# decorador login_required será agregado dinámicamente en register_routes
 
 
 def register_routes(app):
@@ -31,6 +33,7 @@ def register_routes(app):
     
     
     @app.route('/tasks')
+    @app.login_required
     def task_list():
         """
         Muestra la lista de todas las tareas
@@ -47,15 +50,17 @@ def register_routes(app):
         filter_type = request.args.get('filter', 'all')
         sort_by = request.args.get('sort', 'created')
 
+        user_id = session.get('user_id')
+
         # Consultar tareas según el filtro solicitado
         if filter_type == 'pending':
-            tasks = Task.get_pending_tasks()
+            tasks = Task.get_pending_tasks(user_id)
         elif filter_type == 'completed':
-            tasks = Task.get_completed_tasks()
+            tasks = Task.get_completed_tasks(user_id)
         elif filter_type == 'overdue':
-            tasks = Task.get_overdue_tasks()
+            tasks = Task.get_overdue_tasks(user_id)
         else:
-            tasks = Task.get_all_tasks()
+            tasks = Task.get_all_tasks(user_id)
 
         # Aplicar ordenamiento simple en memoria
         if sort_by == 'title':
@@ -63,10 +68,10 @@ def register_routes(app):
         elif sort_by == 'date':
             tasks.sort(key=lambda t: t.due_date or datetime.max)
 
-        # Contar totales globales (para los paneles de estadísticas)
-        total_tasks = len(Task.get_all_tasks())
-        pending_count = len(Task.get_pending_tasks())
-        completed_count = len(Task.get_completed_tasks())
+        # Contar totales del usuario (para los paneles de estadísticas)
+        total_tasks = len(Task.get_all_tasks(user_id))
+        pending_count = len(Task.get_pending_tasks(user_id))
+        completed_count = len(Task.get_completed_tasks(user_id))
 
         # Datos para pasar a la plantilla
         context = {
@@ -111,8 +116,9 @@ def register_routes(app):
                     flash('Formato de fecha inválido. Debe ser YYYY-MM-DD', 'error')
                     return render_template('task_form.html')
 
-            # Crear la nueva tarea
+            # Crear la nueva tarea y asociarla al usuario actual
             new_task = Task(title=title, description=description, due_date=due_date)
+            new_task.user_id = session.get('user_id')
             new_task.save()
 
             flash('Tarea creada exitosamente', 'success')
@@ -122,6 +128,7 @@ def register_routes(app):
         return render_template('task_form.html')
     
     @app.route('/tasks/<int:task_id>')
+    @app.login_required
     def task_detail(task_id):
         """
         Muestra los detalles de una tarea específica
@@ -133,13 +140,14 @@ def register_routes(app):
             str: HTML con los detalles de la tarea
         """
         task = Task.query.get(task_id)
-        if not task:
+        if not task or task.user_id != session.get('user_id'):
             flash('Tarea no encontrada', 'error')
             return redirect(url_for('task_list'))
         return render_template('task_detail.html', task=task)
     
     
     @app.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
+    @app.login_required
     def task_edit(task_id):
         """
         Edita una tarea existente
@@ -154,7 +162,7 @@ def register_routes(app):
             str: HTML del formulario o redirección tras editar
         """
         task = Task.query.get(task_id)
-        if not task:
+        if not task or task.user_id != session.get('user_id'):
             flash('Tarea no encontrada', 'error')
             return redirect(url_for('task_list'))
 
@@ -194,6 +202,7 @@ def register_routes(app):
     
     
     @app.route('/tasks/<int:task_id>/delete', methods=['POST'])
+    @app.login_required
     def task_delete(task_id):
         """
         Elimina una tarea
@@ -205,14 +214,17 @@ def register_routes(app):
             Response: Redirección a la lista de tareas
         """
         task = Task.query.get(task_id)
-        if task:
+        if task and task.user_id == session.get('user_id'):
             db.session.delete(task)
             db.session.commit()
-        flash('Tarea eliminada exitosamente', 'success')
+            flash('Tarea eliminada exitosamente', 'success')
+        else:
+            flash('No se encontró la tarea o no tienes permisos', 'error')
         return redirect(url_for('task_list'))
     
     
     @app.route('/tasks/<int:task_id>/toggle', methods=['POST'])
+    @app.login_required
     def task_toggle(task_id):
         """
         Cambia el estado de completado de una tarea
@@ -224,7 +236,7 @@ def register_routes(app):
             Response: Redirección a la lista de tareas
         """
         task = Task.query.get(task_id)
-        if task:
+        if task and task.user_id == session.get('user_id'):
             task.completed = not task.completed
             db.session.commit()
         flash('Estado de tarea actualizado exitosamente', 'success')
@@ -234,6 +246,7 @@ def register_routes(app):
     # Rutas adicionales para versiones futuras
     
     @app.route('/api/tasks', methods=['GET'])
+    @app.login_required
     def api_tasks():
         """
         API endpoint para obtener tareas en formato JSON

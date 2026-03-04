@@ -3,7 +3,7 @@ Aplicación Flask - Punto de entrada principal
 Este archivo configura y ejecuta la aplicación Flask siguiendo el patrón MVC
 """
 
-from flask import Flask
+from flask import Flask, session
 from flask_sqlalchemy import SQLAlchemy
 from config import config
 import os
@@ -36,9 +36,21 @@ def create_app(config_name=None):
     
     # Importar modelos para que SQLAlchemy los reconozca
     from models.task import Task
-    
+    from models.user import User
+
+    # Context processor para exponer usuario actual en las plantillas
+    @app.context_processor
+    def inject_user():
+        user = None
+        if 'user_id' in session:
+            user = User.query.get(session['user_id'])
+        return dict(current_user=user)
+
     # Registrar blueprints (controladores)
     from controllers.task_controller import register_routes
+    from controllers.auth_controller import register_auth_routes
+    # primero autenticación para que login_required quede disponible
+    register_auth_routes(app)
     register_routes(app)
     
     # Crear tablas de base de datos

@@ -93,9 +93,9 @@ pip install -r requirements.txt
 
 **Objetivo**: Agregar sistema de usuarios
 
-- [ ] Registro e inicio de sesión de usuarios
-- [ ] Asociar tareas a usuarios específicos
-- [ ] Proteger rutas con autenticación
+- [x] Registro e inicio de sesión de usuarios
+- [x] Asociar tareas a usuarios específicos
+- [x] Proteger rutas con autenticación
 
 **Archivos nuevos**: `models/user.py`, `controllers/auth_controller.py`, plantillas de autenticación
 
