@@ -42,7 +42,25 @@ def register_routes(app):
         Returns:
             str: HTML renderizado con la lista de tareas
         """
-        # TODO: Implementar en Versión 1
+        # Implementar en Versión 1
+        # Query the database for all tasks
+        tasks = Task.query.all()
+
+        # Apply filtering
+        if filter_type == 'pending':
+            tasks = [task for task in tasks if not task.completed]
+        elif filter_type == 'completed':
+            tasks = [task for task in tasks if task.completed]
+
+        # Apply sorting
+        if sort_by == 'title':
+            tasks.sort(key=lambda t: t.title)
+        elif sort_by == 'date':
+            tasks.sort(key=lambda t: t.due_date or datetime.max)
+
+        # Count tasks by status
+        pending_count = sum(1 for task in tasks if not task.completed)
+        completed_count = sum(1 for task in tasks if task.completed)
         # Obtener parámetros de filtro y ordenamiento
         filter_type = request.args.get('filter', 'all')
         sort_by = request.args.get('sort', 'created')
@@ -75,11 +93,33 @@ def register_routes(app):
             str: HTML del formulario o redirección tras crear la tarea
         """
         if request.method == 'POST':
-            pass # TODO: implementar para una solicitud POST
-        
+            title = request.form.get('title')
+            description = request.form.get('description')
+            due_date_str = request.form.get('due_date')
+
+            # Validar que el título sea obligatorio
+            if not title:
+                flash('El título es obligatorio', 'error')
+                return render_template('task_form.html')
+
+            # Convertir la fecha de vencimiento si existe
+            due_date = None
+            if due_date_str:
+                try:
+                    due_date = datetime.strptime(due_date_str, '%Y-%m-%d')
+                except ValueError:
+                    flash('Formato de fecha inválido. Debe ser YYYY-MM-DD', 'error')
+                    return render_template('task_form.html')
+
+            # Crear la nueva tarea
+            new_task = Task(title=title, description=description, due_date=due_date)
+            new_task.save()
+
+            flash('Tarea creada exitosamente', 'success')
+            return redirect(url_for('task_list'))
+
         # Mostrar formulario de creación
-        pass # TODO: implementar para una solicitud GET
-    
+        return render_template('task_form.html')
     
     @app.route('/tasks/<int:task_id>')
     def task_detail(task_id):
@@ -110,10 +150,14 @@ def register_routes(app):
             str: HTML del formulario o redirección tras editar
         """
         if request.method == 'POST':
-            pass # TODO: implementar para una solicitud POST
+            title = request.form.get('title')
         
         # Mostrar el formulario para editar la tarea
-        pass # TODO: implementar para una solicitud GET
+        task = Task.query.get(task_id)
+        if not task:
+            flash('Tarea no encontrada', 'error')
+            return redirect(url_for('task_list'))
+        return render_template('task_form.html', task=task)
     
     
     @app.route('/tasks/<int:task_id>/delete', methods=['POST'])
@@ -127,7 +171,12 @@ def register_routes(app):
         Returns:
             Response: Redirección a la lista de tareas
         """
-        pass # TODO: implementar el método
+        task = Task.query.get(task_id)
+        if task:
+            db.session.delete(task)
+            db.session.commit()
+        flash('Tarea eliminada exitosamente', 'success')
+        return redirect(url_for('task_list'))
     
     
     @app.route('/tasks/<int:task_id>/toggle', methods=['POST'])
@@ -141,7 +190,12 @@ def register_routes(app):
         Returns:
             Response: Redirección a la lista de tareas
         """
-        pass # TODO: implementar el método
+        task = Task.query.get(task_id)
+        if task:
+            task.completed = not task.completed
+            db.session.commit()
+        flash('Estado de tarea actualizado exitosamente', 'success')
+        return redirect(url_for('task_list')) 
     
     
     # Rutas adicionales para versiones futuras
@@ -155,7 +209,6 @@ def register_routes(app):
         Returns:
             json: Lista de tareas en formato JSON
         """
-        # TODO: para versiones futuras
         return jsonify({
             'tasks': [],
             'message': 'API en desarrollo - Implementar en versiones futuras'

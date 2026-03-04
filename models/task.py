@@ -67,15 +67,18 @@ class Task(db.Model):
         Returns:
             bool: True si la tarea está vencida, False en caso contrario
         """
-        pass # TODO: implementar el método
+        if self.due_date and self.due_date < datetime.utcnow():
+            return True
+        return False
     
     def mark_completed(self):
         """Marca la tarea como completada"""
-        pass # TODO: implementar el método
+        self.completed = True
     
+
     def mark_pending(self):
         """Marca la tarea como pendiente"""
-        pass # TODO: implementar el método
+        self.completed = False
     
     @staticmethod
     def get_all_tasks():
@@ -95,7 +98,7 @@ class Task(db.Model):
         Returns:
             list: Lista de tareas pendientes
         """
-        pass # TODO: implementar el método
+        return Task.query.filter_by(completed=False).all()
     
     @staticmethod
     def get_completed_tasks():
@@ -105,7 +108,7 @@ class Task(db.Model):
         Returns:
             list: Lista de tareas completadas
         """
-        pass # TODO: implementar el método
+        return Task.query.filter_by(completed=True).all()
     
     @staticmethod
     def get_overdue_tasks():
@@ -115,13 +118,14 @@ class Task(db.Model):
         Returns:
             list: Lista de tareas vencidas
         """
-        pass # TODO: implementar el método
+        return Task.query.filter(Task.due_date < datetime.utcnow(), Task.completed == False).all()
     
     def save(self):
         """Guarda la tarea en la base de datos"""
-        pass # TODO: implementar el método
+        db.session.add(self)
+        db.session.commit()
     
     def delete(self):
         """Elimina la tarea de la base de datos"""
-        pass # TODO: implementar el método
-
+        db.session.delete(self)
+        db.session.commit()
