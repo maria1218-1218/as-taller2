@@ -141,7 +141,7 @@
             <div class="card-body p-0">
                 {% if tasks %}
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-hover table-tasks mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th width="5%">Estado</th>
@@ -161,6 +161,12 @@
                                                 <i class="fas fa-{{ 'check-circle' if task.completed else 'circle' }}"></i>
                                             </button>
                                         </form>
+                                        <div class="mt-1">
+                                            {% set status_class = 'task-completed' if task.completed else 'task-overdue' if task.is_overdue() else 'task-pending' %}
+                                            <span class="badge-status {{ status_class }}">
+                                                {{ 'Hecha' if task.completed else 'Vencida' if task.is_overdue() else 'Pendiente' }}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="fw-bold {{ 'text-decoration-line-through text-muted' if task.completed else '' }}">

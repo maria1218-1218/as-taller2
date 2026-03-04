@@ -143,14 +143,23 @@ main {
     text-align: center;
 }
 
-/* TODO: Estado completado */
-.task-completed .badge-status { }
+/* Estado completado */
+.task-completed .badge-status {
+    background-color: var(--success-color);
+    color: #fff;
+}
 
-/* TODO: Estado pendiente */
-.task-pending .badge-status { }
+/* Estado pendiente */
+.task-pending .badge-status {
+    background-color: var(--warning-color);
+    color: #212529;
+}
 
-/* TODO: Estado vencido */
-.task-overdue .badge-status { }
+/* Estado vencido */
+.task-overdue .badge-status {
+    background-color: var(--danger-color);
+    color: #fff;
+}
 
 .task-completed td {
     text-decoration: line-through;

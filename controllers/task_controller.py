@@ -43,39 +43,39 @@ def register_routes(app):
             str: HTML renderizado con la lista de tareas
         """
         # Implementar en Versión 1
-        # Query the database for all tasks
-        tasks = Task.query.all()
-
-        # Apply filtering
-        if filter_type == 'pending':
-            tasks = [task for task in tasks if not task.completed]
-        elif filter_type == 'completed':
-            tasks = [task for task in tasks if task.completed]
-
-        # Apply sorting
-        if sort_by == 'title':
-            tasks.sort(key=lambda t: t.title)
-        elif sort_by == 'date':
-            tasks.sort(key=lambda t: t.due_date or datetime.max)
-
-        # Count tasks by status
-        pending_count = sum(1 for task in tasks if not task.completed)
-        completed_count = sum(1 for task in tasks if task.completed)
         # Obtener parámetros de filtro y ordenamiento
         filter_type = request.args.get('filter', 'all')
         sort_by = request.args.get('sort', 'created')
 
-        # Por ahora, solo mostrar una lista vacía
-        tasks = []
+        # Consultar tareas según el filtro solicitado
+        if filter_type == 'pending':
+            tasks = Task.get_pending_tasks()
+        elif filter_type == 'completed':
+            tasks = Task.get_completed_tasks()
+        elif filter_type == 'overdue':
+            tasks = Task.get_overdue_tasks()
+        else:
+            tasks = Task.get_all_tasks()
+
+        # Aplicar ordenamiento simple en memoria
+        if sort_by == 'title':
+            tasks.sort(key=lambda t: t.title.lower())
+        elif sort_by == 'date':
+            tasks.sort(key=lambda t: t.due_date or datetime.max)
+
+        # Contar totales globales (para los paneles de estadísticas)
+        total_tasks = len(Task.get_all_tasks())
+        pending_count = len(Task.get_pending_tasks())
+        completed_count = len(Task.get_completed_tasks())
 
         # Datos para pasar a la plantilla
         context = {
             'tasks': tasks,
             'filter_type': filter_type,
             'sort_by': sort_by,
-            'total_tasks': len(tasks),
-            'pending_count': 0,
-            'completed_count': 0
+            'total_tasks': total_tasks,
+            'pending_count': pending_count,
+            'completed_count': completed_count
         }
 
         return render_template('task_list.html', **context)
@@ -132,7 +132,11 @@ def register_routes(app):
         Returns:
             str: HTML con los detalles de la tarea
         """
-        pass # TODO: implementar el método
+        task = Task.query.get(task_id)
+        if not task:
+            flash('Tarea no encontrada', 'error')
+            return redirect(url_for('task_list'))
+        return render_template('task_detail.html', task=task)
     
     
     @app.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
@@ -149,14 +153,43 @@ def register_routes(app):
         Returns:
             str: HTML del formulario o redirección tras editar
         """
-        if request.method == 'POST':
-            title = request.form.get('title')
-        
-        # Mostrar el formulario para editar la tarea
         task = Task.query.get(task_id)
         if not task:
             flash('Tarea no encontrada', 'error')
             return redirect(url_for('task_list'))
+
+        if request.method == 'POST':
+            title = request.form.get('title')
+            description = request.form.get('description')
+            due_date_str = request.form.get('due_date')
+            completed = bool(request.form.get('completed'))
+
+            # Validación del título obligatorio
+            if not title:
+                flash('El título es obligatorio', 'error')
+                return render_template('task_form.html', task=task)
+
+            # Procesar fecha de vencimiento
+            due_date = None
+            if due_date_str:
+                try:
+                    # datetime-local field returns YYYY-MM-DDTHH:MM
+                    due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
+                except ValueError:
+                    flash('Formato de fecha inválido. Debe ser YYYY-MM-DDTHH:MM', 'error')
+                    return render_template('task_form.html', task=task)
+
+            # Actualizar atributos
+            task.title = title
+            task.description = description
+            task.due_date = due_date
+            task.completed = completed
+            db.session.commit()
+
+            flash('Tarea actualizada exitosamente', 'success')
+            return redirect(url_for('task_list'))
+
+        # Mostrar el formulario para editar la tarea
         return render_template('task_form.html', task=task)
     
     

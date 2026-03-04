@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block title %}Detalle de Tarea - To-Do App MVC{% endblock %}
+
+{% block breadcrumb %}
+{{ super() }}
+<li class="breadcrumb-item">
+    <a href="{{ url_for('task_list') }}">Tareas</a>
+</li>
+<li class="breadcrumb-item active">Detalle</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Detalle de la Tarea
+                </h5>
+            </div>
+            <div class="card-body">
+                <h3 class="fw-bold">{{ task.title }}</h3>
+                <p class="text-muted mb-3">
+                    {% if task.description %}
+                        {{ task.description }}
+                    {% else %}
+                        <em>Sin descripción</em>
+                    {% endif %}
+                </p>
+
+                <ul class="list-group mb-3">
+                    <li class="list-group-item">
+                        <strong>Estado:</strong>
+                        {% if task.completed %}
+                            <span class="badge bg-success">Completada</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pendiente</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Vencimiento:</strong>
+                        {% if task.due_date %}
+                            {{ task.due_date.strftime('%d/%m/%Y %H:%M') }}
+                        {% else %}
+                            <span class="text-muted">Sin fecha</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Creada:</strong> {{ task.created_at.strftime('%d/%m/%Y %H:%M') }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Última modificación:</strong> {{ task.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                    </li>
+                </ul>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('task_edit', task_id=task.id) }}" class="btn btn-primary">
+                        <i class="fas fa-edit me-1"></i> Editar
+                    </a>
+                    <a href="{{ url_for('task_list') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Volver a la lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -73,9 +73,9 @@ pip install -r requirements.txt
 
 **Objetivo**: Agregar validaciones y mejorar la presentación
 
-- [ ] Validación básica en formularios (campos requeridos, fecha válida)
-- [ ] Plantillas Jinja reutilizables usando `layout.html`
-- [ ] Estilos básicos con CSS o Bootstrap
+- [x] Validación básica en formularios (campos requeridos, fecha válida)
+- [x] Plantillas Jinja reutilizables usando `layout.html`
+- [x] Estilos básicos con CSS o Bootstrap
 
 **Archivos a modificar**: `templates/*.html`, `static/style.css`, `controllers/task_controller.py`
 
